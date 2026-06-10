@@ -9,14 +9,12 @@
     <!-- Библиотека для работы с PDF -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <style>
-        /* Поджали верхний отступ всей страницы */
         body { padding-top: 0.75rem; background-color: #f8f9fa; }
         main { max-width: 750px; background: white; padding: 1.5rem 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
         .description { color: #6c757d; font-size: 0.95rem; margin-bottom: 1.2rem; }
         .loader { display: none; margin-top: 1rem; color: #10957c; font-weight: bold; text-align: center;}
         
-        /* Настройка полей ввода для иврита */
         textarea { 
             direction: rtl; 
             text-align: right; 
@@ -25,7 +23,6 @@
             height: 110px; 
             margin-bottom: 1rem;
         }
-        /* Стилизация подсказок (placeholders) */
         textarea::placeholder {
             direction: ltr;
             text-align: left;
@@ -35,8 +32,6 @@
         
         .field-label { font-weight: bold; margin-bottom: 0.1rem; display: block; }
         .field-sublabel { font-size: 0.85rem; color: #6c757d; margin-bottom: 0.3rem; display: block; }
-        
-        /* Аккуратный стиль для автора прямо над кнопкой */
         .author-credit { font-size: 0.75rem; text-align: right; color: #adb5bd; margin-bottom: 0.4rem; }
         footer { margin-top: 2rem; text-align: center; font-size: 0.8rem; color: #adb5bd; }
     </style>
@@ -74,7 +69,6 @@
                         placeholder="RU: Поле «Трудоспособность» заполняется исключительно на иврите.&#10;EN: The «Employment Capacity» field must be filled out exclusively in Hebrew."></textarea>
                 </div>
 
-                <!-- Подпись автора перед кнопкой -->
                 <div class="author-credit">Oksengendler Kirill, Haifa</div>
                 
                 <button type="submit" class="contrast" style="width: 100%;">
@@ -104,21 +98,27 @@
                 const templateUrl = './blank.pdf'; 
                 
                 const existingPdfBytes = await fetch(templateUrl).then(res => {
-                    if (!res.ok) throw new Error('Файл blank.pdf не найден. Убедитесь, что он лежит в одной папке с index.html');
+                    if (!res.ok) throw new Error('Файл blank.pdf не найден на сервере.');
                     return res.arrayBuffer();
                 });
 
                 const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
                 const form = pdfDoc.getForm();
 
-                const limitationsField = form.getTextField('med_limitations');
-                const jobField = form.getTextField('employment_capacity');
+                // Автоматический поиск всех текстовых полей без привязки к их точным именам
+                const textFields = form.getFields().filter(f => typeof f.setText === 'function');
 
-                limitationsField.setText(limitationsText);
-                jobField.setText(jobText);
+                if (textFields.length < 2) {
+                    const allNames = form.getFields().map(f => f.getName()).join(', ');
+                    throw new Error('В вашем PDF-файле не найдены интерактивные поля для ввода текста. Убедитесь, что вы добавили Form Fields в редакторе. Найдено полей: ' + (allNames || '0'));
+                }
 
-                limitationsField.readOnly();
-                jobField.readOnly();
+                // Заполняем первое найденное поле текстом ограничений, второе — трудоспособностью
+                textFields[0].setText(limitationsText);
+                textFields[1].setText(jobText);
+
+                if (typeof textFields[0].readOnly === 'function') textFields[0].readOnly();
+                if (typeof textFields[1].readOnly === 'function') textFields[1].readOnly();
 
                 const pdfBytes = await pdfDoc.save();
 
