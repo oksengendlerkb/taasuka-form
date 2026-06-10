@@ -2,11 +2,10 @@
 <html lang="ru" data-theme="light">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Form Generator</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-    
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://unpkg.com/@pdf-lib/fontkit@0.0.2/dist/fontkit.umd.js"></script>
     
     <style>
         body { padding-top: 1rem; background-color: #f8f9fa; }
@@ -25,7 +24,7 @@
             <textarea id="job_text" required></textarea>
             <button type="submit" class="contrast" style="width: 100%;">Сгенерировать PDF</button>
         </form>
-        <div id="loading-status" class="loader">Обработка...</div>
+        <div id="loading-status" class="loader">Создание документа...</div>
     </main>
 
     <script>
@@ -37,33 +36,28 @@
             try {
                 // 1. Загрузка PDF
                 const pdfResponse = await fetch('./blank.pdf');
-                if (!pdfResponse.ok) throw new Error('Не удалось скачать blank.pdf');
+                if (!pdfResponse.ok) throw new Error('Не удалось найти blank.pdf');
                 const pdfDoc = await PDFLib.PDFDocument.load(await pdfResponse.arrayBuffer());
 
-                // 2. Регистрация Fontkit
-                pdfDoc.registerFontkit(fontkit);
-
-                // 3. Загрузка шрифта
-                const fontUrl = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosanshebrew/NotoSansHebrew-Regular.ttf';
-                const fontResponse = await fetch(fontUrl);
-                if (!fontResponse.ok) throw new Error('Не удалось скачать шрифт (ошибка сети)');
-                const fontBytes = await fontResponse.arrayBuffer();
-                
-                const hebrewFont = await pdfDoc.embedFont(fontBytes);
-
-                // 4. Заполнение
+                // 2. Заполнение полей
                 const form = pdfDoc.getForm();
                 const fields = form.getFields();
                 const textFields = fields.filter(f => typeof f.setText === 'function');
                 
-                textFields.forEach(field => {
-                    field.setFont(hebrewFont);
-                });
+                if (textFields.length < 2) throw new Error("Недостаточно полей в PDF");
 
                 textFields[0].setText(document.getElementById('med_text').value);
                 textFields[1].setText(document.getElementById('job_text').value);
 
-                // 5. Сохранение
+                // 3. Активация авто-рендеринга шрифтов (решает проблему отображения иврита)
+                const { PDFName, PDFBoolean } = PDFLib;
+                const acroFormRef = pdfDoc.catalog.get(PDFName.of('AcroForm'));
+                if (acroFormRef) {
+                    const acroForm = pdfDoc.context.lookup(acroFormRef);
+                    acroForm.set(PDFName.of('NeedAppearances'), PDFBoolean.True);
+                }
+
+                // 4. Сохранение
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: "application/pdf" });
                 const link = document.createElement('a');
