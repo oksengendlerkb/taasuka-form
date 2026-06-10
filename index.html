@@ -2,7 +2,6 @@
 <html lang="ru" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Form Generator</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     
@@ -20,15 +19,13 @@
     <main class="container">
         <h1>Генератор бланков</h1>
         <form id="pdf-form" onsubmit="generatePDF(event)">
-            <label>Медицинские ограничения (иврит):</label>
-            <textarea id="med_text" required placeholder="Введите текст..."></textarea>
-            
-            <label>Трудоспособность (иврит):</label>
-            <textarea id="job_text" required placeholder="Введите текст..."></textarea>
-            
-            <button type="submit" class="contrast" style="width: 100%;">Сгенерировать и скачать PDF</button>
+            <label>Медицинские ограничения:</label>
+            <textarea id="med_text" required></textarea>
+            <label>Трудоспособность:</label>
+            <textarea id="job_text" required></textarea>
+            <button type="submit" class="contrast" style="width: 100%;">Сгенерировать PDF</button>
         </form>
-        <div id="loading-status" class="loader">Загрузка шрифтов и создание PDF...</div>
+        <div id="loading-status" class="loader">Обработка...</div>
     </main>
 
     <script>
@@ -38,30 +35,27 @@
             statusDiv.style.display = 'block';
 
             try {
-                // 1. Загружаем шаблон
-                const existingPdfBytes = await fetch('./blank.pdf').then(res => res.arrayBuffer());
-                const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+                // 1. Загрузка PDF
+                const pdfResponse = await fetch('./blank.pdf');
+                if (!pdfResponse.ok) throw new Error('Не удалось скачать blank.pdf');
+                const pdfDoc = await PDFLib.PDFDocument.load(await pdfResponse.arrayBuffer());
 
-                // 2. Подключаем Fontkit
+                // 2. Регистрация Fontkit
                 pdfDoc.registerFontkit(fontkit);
 
-                // 3. Загружаем шрифт (Noto Sans Hebrew)
+                // 3. Загрузка шрифта
                 const fontUrl = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosanshebrew/NotoSansHebrew-Regular.ttf';
-                const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+                const fontResponse = await fetch(fontUrl);
+                if (!fontResponse.ok) throw new Error('Не удалось скачать шрифт (ошибка сети)');
+                const fontBytes = await fontResponse.arrayBuffer();
+                
                 const hebrewFont = await pdfDoc.embedFont(fontBytes);
 
-                // 4. Заполняем форму
+                // 4. Заполнение
                 const form = pdfDoc.getForm();
                 const fields = form.getFields();
-                
-                // Находим текстовые поля
                 const textFields = fields.filter(f => typeof f.setText === 'function');
                 
-                if (textFields.length < 2) {
-                    throw new Error("Не найдено достаточно полей в PDF. Проверьте blank.pdf");
-                }
-
-                // Применяем шрифт и текст к каждому полю
                 textFields.forEach(field => {
                     field.setFont(hebrewFont);
                 });
@@ -69,7 +63,7 @@
                 textFields[0].setText(document.getElementById('med_text').value);
                 textFields[1].setText(document.getElementById('job_text').value);
 
-                // 5. Сохраняем
+                // 5. Сохранение
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: "application/pdf" });
                 const link = document.createElement('a');
