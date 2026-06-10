@@ -2,138 +2,134 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Form Generator</title>
 
-<title>PDF Form Generator</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
 
-<link rel="stylesheet"
-href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
 
-<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
-    
-<style>
-body{
-    padding-top:1rem;
-    background:#f8f9fa;
-}
+    <style>
+        body {
+            padding-top: 1rem;
+            background-color: #f8f9fa;
+        }
 
-main{
-    max-width:600px;
-    background:white;
-    padding:2rem;
-    border-radius:8px;
-    box-shadow:0 4px 6px rgba(0,0,0,.1);
-}
+        main {
+            max-width: 600px;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
 
-textarea{
-    direction:rtl;
-    text-align:right;
-    height:120px;
-    margin-bottom:1rem;
-}
+        textarea {
+            direction: rtl;
+            text-align: right;
+            height: 120px;
+            margin-bottom: 1rem;
+        }
 
-.loader{
-    display:none;
-    margin-top:1rem;
-    color:#10957c;
-    font-weight:bold;
-    text-align:center;
-}
-</style>
+        .loader {
+            display: none;
+            margin-top: 1rem;
+            color: #10957c;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
 
 <main class="container">
 
-<h1>Генератор бланков</h1>
+    <h1>Генератор бланков</h1>
 
-<form id="pdf-form">
+    <form id="pdf-form">
 
-<label>Медицинские ограничения</label>
-<textarea id="med_text" required></textarea>
+        <label>Медицинские ограничения:</label>
+        <textarea id="med_text" required></textarea>
 
-<label>Трудоспособность</label>
-<textarea id="job_text" required></textarea>
+        <label>Трудоспособность:</label>
+        <textarea id="job_text" required></textarea>
 
-<button type="submit" class="contrast" style="width:100%;">
-Сгенерировать PDF
-</button>
+        <button type="submit"
+                class="contrast"
+                style="width:100%;">
+            Сгенерировать PDF
+        </button>
 
-</form>
+    </form>
 
-<div id="loading-status" class="loader">
-Обработка...
-</div>
+    <div id="loading-status" class="loader">
+        Обработка...
+    </div>
 
 </main>
 
 <script>
 
 document
-.getElementById('pdf-form')
-.addEventListener('submit', generatePDF);
+    .getElementById('pdf-form')
+    .addEventListener('submit', generatePDF);
 
-async function generatePDF(event){
+async function generatePDF(event) {
 
     event.preventDefault();
 
     const statusDiv =
         document.getElementById('loading-status');
 
-    statusDiv.style.display='block';
+    statusDiv.style.display = 'block';
 
-    try{
+    try {
 
-        const response =
+        const pdfResponse =
             await fetch('./blank.pdf');
 
-        if(!response.ok){
+        if (!pdfResponse.ok) {
             throw new Error(
-                'Не найден файл blank.pdf'
+                'Файл blank.pdf не найден'
             );
         }
 
         const pdfBytes =
-            await response.arrayBuffer();
+            await pdfResponse.arrayBuffer();
 
         const pdfDoc =
             await PDFLib.PDFDocument.load(pdfBytes);
 
         const form = pdfDoc.getForm();
 
-        try{
+        pdfDoc.registerFontkit(fontkit);
 
-            const acroForm =
-                pdfDoc.catalog.lookup(
-                    PDFLib.PDFName.of('AcroForm')
-                );
+        const fontResponse =
+            await fetch('./NotoSansHebrew-Regular.ttf');
 
-            if(acroForm){
-                acroForm.set(
-                    PDFLib.PDFName.of('NeedAppearances'),
-                    PDFLib.PDFBool.True
-                );
-            }
-
-        }catch(e){
-            console.warn(
-                'NeedAppearances не установлен',
-                e
+        if (!fontResponse.ok) {
+            throw new Error(
+                'Не найден файл NotoSansHebrew-Regular.ttf'
             );
         }
+
+        const fontBytes =
+            await fontResponse.arrayBuffer();
+
+        const hebrewFont =
+            await pdfDoc.embedFont(fontBytes);
 
         const fields = form.getFields();
 
         const textFields =
             fields.filter(
-                field =>
-                typeof field.setText === 'function'
+                f => typeof f.setText === 'function'
             );
 
-        if(textFields.length < 2){
+        if (textFields.length < 2) {
             throw new Error(
                 'В PDF найдено менее двух текстовых полей'
             );
@@ -148,34 +144,40 @@ async function generatePDF(event){
         textFields[0].setText(medText);
         textFields[1].setText(jobText);
 
-        const finalPdf =
+        form.updateFieldAppearances(
+            hebrewFont
+        );
+
+        const outputBytes =
             await pdfDoc.save();
 
         const blob =
             new Blob(
-                [finalPdf],
-                {type:'application/pdf'}
+                [outputBytes],
+                {
+                    type: 'application/pdf'
+                }
             );
 
         const url =
             URL.createObjectURL(blob);
 
-        const a =
+        const link =
             document.createElement('a');
 
-        a.href = url;
-        a.download = 'filled_form.pdf';
+        link.href = url;
+        link.download = 'filled_form.pdf';
 
-        document.body.appendChild(a);
+        document.body.appendChild(link);
 
-        a.click();
+        link.click();
 
-        a.remove();
+        document.body.removeChild(link);
 
         URL.revokeObjectURL(url);
 
     }
-    catch(error){
+    catch (error) {
 
         console.error(error);
 
@@ -183,9 +185,9 @@ async function generatePDF(event){
             'Ошибка: ' + error.message
         );
     }
-    finally{
+    finally {
 
-        statusDiv.style.display='none';
+        statusDiv.style.display = 'none';
     }
 }
 
@@ -194,3 +196,4 @@ async function generatePDF(event){
 </body>
 </html>
 ```
+
