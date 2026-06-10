@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Form Generator | Шерут Таасука</title>
-    <!-- Минималистичный CSS фреймворк -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-    <!-- Библиотека для работы с PDF -->
+    
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    
     <style>
         body { padding-top: 0.75rem; background-color: #f8f9fa; }
         main { max-width: 750px; background: white; padding: 1.5rem 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -49,20 +49,18 @@
         <section>
             <form id="pdf-form" onsubmit="generatePDF(event)">
                 
-                <!-- БЛОК 1: МЕДИЦИНСКИЕ ОГРАНИЧЕНИЯ -->
                 <div>
                     <span class="field-label">1. Медицинские ограничения / Medical Limitations</span>
-                    <span class="field-sublabel">הצהרה על מגבלות רפואיות</span>
+                    <span class="field-sublabel">הצהרה на מגבלות רפואיות</span>
                     <textarea 
                         id="med_text" 
                         required 
                         placeholder="RU: Поле «Медицинские ограничения» заполняется исключительно на иврите.&#10;EN: The «Medical Limitations» field must be filled out exclusively in Hebrew."></textarea>
                 </div>
 
-                <!-- БЛОК 2: ТРУДОСПОСОБНОСТЬ -->
                 <div>
                     <span class="field-label">2. Трудоспособность / Employment Capacity</span>
-                    <span class="field-sublabel">הצהרה על מסוגלות תעסוקתית</span>
+                    <span class="field-sublabel">הצהרה на מסוגלות תעסוקתית</span>
                     <textarea 
                         id="job_text" 
                         required 
@@ -97,26 +95,41 @@
 
                 const templateUrl = './blank.pdf'; 
                 
+                // 1. Загружаем PDF бланк
                 const existingPdfBytes = await fetch(templateUrl).then(res => {
                     if (!res.ok) throw new Error('Файл blank.pdf не найден на сервере.');
                     return res.arrayBuffer();
                 });
 
                 const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+                
                 const form = pdfDoc.getForm();
-
-                // Автоматический поиск всех текстовых полей без привязки к их точным именам
                 const textFields = form.getFields().filter(f => typeof f.setText === 'function');
 
                 if (textFields.length < 2) {
                     const allNames = form.getFields().map(f => f.getName()).join(', ');
-                    throw new Error('В вашем PDF-файле не найдены интерактивные поля для ввода текста. Убедитесь, что вы добавили Form Fields в редакторе. Найдено полей: ' + (allNames || '0'));
+                    throw new Error('В вашем PDF-файле не найдены интерактивные поля. Найдено полей: ' + (allNames || '0'));
                 }
 
-                // Заполняем первое найденное поле текстом ограничений, второе — трудоспособностью
-                textFields[0].setText(limitationsText);
-                textFields[1].setText(jobText);
+                // Извлекаем низкоуровневые конструкторы из PDFLib для прямой манипуляции словарем PDF
+                const { PDFName, PDFHexString, PDFBoolean } = PDFLib;
 
+                // 2. Записываем значения напрямую в виде Юникод-строки (Hex UTF-16BE)
+                // Это обходит внутренний генератор внешнего вида pdf-lib, ломающийся на иврите
+                textFields[0].acroField.setV(PDFHexString.fromText(limitationsText));
+                textFields[1].acroField.setV(PDFHexString.fromText(jobText));
+
+                // 3. Выставляем флаг NeedAppearances в значение true.
+                // Это заставляет просмотрщик PDF (браузер, Adobe Reader) отрисовать текст встроенными системными шрифтами.
+                const acroFormRef = pdfDoc.catalog.get(PDFName.of('AcroForm'));
+                if (acroFormRef) {
+                    const acroForm = pdfDoc.context.lookup(acroFormRef);
+                    if (acroForm) {
+                        acroForm.set(PDFName.of('NeedAppearances'), PDFBoolean.True);
+                    }
+                }
+
+                // Делаем поля доступными только для чтения (защита от редактирования пользователем)
                 if (typeof textFields[0].readOnly === 'function') textFields[0].readOnly();
                 if (typeof textFields[1].readOnly === 'function') textFields[1].readOnly();
 
