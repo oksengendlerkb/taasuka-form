@@ -24,7 +24,7 @@
             <textarea id="job_text" required></textarea>
             <button type="submit" class="contrast" style="width: 100%;">Сгенерировать PDF</button>
         </form>
-        <div id="loading-status" class="loader">Создание документа...</div>
+        <div id="loading-status" class="loader">Обработка...</div>
     </main>
 
     <script>
@@ -34,26 +34,28 @@
             statusDiv.style.display = 'block';
 
             try {
+                // 1. Загрузка PDF
                 const pdfResponse = await fetch('./blank.pdf');
                 if (!pdfResponse.ok) throw new Error('Файл blank.pdf не найден');
                 const pdfDoc = await PDFLib.PDFDocument.load(await pdfResponse.arrayBuffer());
 
+                // 2. Получение формы
                 const form = pdfDoc.getForm();
+                
+                // ВАЖНО: Это заставляет ридер PDF самому отрисовать текст, 
+                // игнорируя встроенные шрифты (решает ошибку WinAnsi)
+                form.needAppearances();
+
                 const fields = form.getFields();
                 const textFields = fields.filter(f => typeof f.setText === 'function');
                 
-                if (textFields.length < 2) throw new Error("Недостаточно полей в PDF");
+                if (textFields.length < 2) throw new Error("Не найдено достаточно полей в PDF");
 
+                // 3. Заполнение текста
                 textFields[0].setText(document.getElementById('med_text').value);
                 textFields[1].setText(document.getElementById('job_text').value);
 
-                // Исправленный метод активации NeedAppearances
-                const acroFormRef = pdfDoc.catalog.get(PDFLib.PDFName.of('AcroForm'));
-                if (acroFormRef) {
-                    const acroForm = pdfDoc.context.lookup(acroFormRef);
-                    acroForm.set(PDFLib.PDFName.of('NeedAppearances'), pdfDoc.context.obj(true));
-                }
-
+                // 4. Сохранение
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: "application/pdf" });
                 const link = document.createElement('a');
