@@ -3,128 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Form Generator | Шерут Таасука</title>
+    <title>PDF Form Generator</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/@pdf-lib/fontkit@0.0.2/dist/fontkit.umd.js"></script>
     
     <style>
-        body { padding-top: 0.75rem; background-color: #f8f9fa; }
-        main { max-width: 750px; background: white; padding: 1.5rem 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-        .description { color: #6c757d; font-size: 0.95rem; margin-bottom: 1.2rem; }
-        .loader { display: none; margin-top: 1rem; color: #10957c; font-weight: bold; text-align: center;}
-        
-        textarea { 
-            direction: rtl; 
-            text-align: right; 
-            font-family: sans-serif; 
-            font-size: 1rem; 
-            height: 110px; 
-            margin-bottom: 1rem;
-        }
-        textarea::placeholder {
-            direction: ltr;
-            text-align: left;
-            font-size: 0.9rem;
-            color: #868e96;
-        }
-        
-        .field-label { font-weight: bold; margin-bottom: 0.1rem; display: block; }
-        .field-sublabel { font-size: 0.85rem; color: #6c757d; margin-bottom: 0.3rem; display: block; }
-        .author-credit { font-size: 0.75rem; text-align: right; color: #adb5bd; margin-bottom: 0.4rem; }
-        footer { margin-top: 2rem; text-align: center; font-size: 0.8rem; color: #adb5bd; }
+        body { padding-top: 1rem; background-color: #f8f9fa; }
+        main { max-width: 600px; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        textarea { direction: rtl; text-align: right; height: 120px; margin-bottom: 1rem; }
+        .loader { display: none; margin-top: 1rem; color: #10957c; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
     <main class="container">
-        <header>
-            <h1>🇮🇱 Генератор бланков Службы занятости / Employment Service Form Generator</h1>
-            <p class="description">
-                RU: Автоматическое заполнение декларации.<br>
-                EN: Automated declaration form filler.
-            </p>
-        </header>
-
-        <section>
-            <form id="pdf-form" onsubmit="generatePDF(event)">
-                
-                <div>
-                    <span class="field-label">1. Медицинские ограничения / Medical Limitations</span>
-                    <span class="field-sublabel">הצהרה על מגבלות רפואיות</span>
-                    <textarea 
-                        id="med_text" 
-                        required 
-                        placeholder="Введите текст на иврите..."></textarea>
-                </div>
-
-                <div>
-                    <span class="field-label">2. Трудоспособность / Employment Capacity</span>
-                    <span class="field-sublabel">הצהרה על מסוגלות תעסוקתית</span>
-                    <textarea 
-                        id="job_text" 
-                        required 
-                        placeholder="Введите текст на иврите..."></textarea>
-                </div>
-
-                <div class="author-credit">Oksengendler Kirill, Haifa</div>
-                
-                <button type="submit" class="contrast" style="width: 100%;">
-                    Сгенерировать и скачать PDF
-                </button>
-            </form>
+        <h1>Генератор бланков</h1>
+        <form id="pdf-form" onsubmit="generatePDF(event)">
+            <label>Медицинские ограничения (иврит):</label>
+            <textarea id="med_text" required placeholder="Введите текст..."></textarea>
             
-            <div id="loading-status" class="loader">Обработка документа...</div>
-        </section>
-
-        <footer>
-            <small>Privacy First Architecture. No server-side data storage.</small>
-        </footer>
+            <label>Трудоспособность (иврит):</label>
+            <textarea id="job_text" required placeholder="Введите текст..."></textarea>
+            
+            <button type="submit" class="contrast" style="width: 100%;">Сгенерировать и скачать PDF</button>
+        </form>
+        <div id="loading-status" class="loader">Загрузка шрифтов и создание PDF...</div>
     </main>
 
     <script>
         async function generatePDF(event) {
             event.preventDefault();
-            
             const statusDiv = document.getElementById('loading-status');
             statusDiv.style.display = 'block';
 
             try {
-                const limitationsText = document.getElementById('med_text').value;
-                const jobText = document.getElementById('job_text').value;
-
-                const templateUrl = './blank.pdf'; 
-                
-                const existingPdfBytes = await fetch(templateUrl).then(res => {
-                    if (!res.ok) throw new Error('Файл blank.pdf не найден.');
-                    return res.arrayBuffer();
-                });
-
+                // 1. Загружаем шаблон
+                const existingPdfBytes = await fetch('./blank.pdf').then(res => res.arrayBuffer());
                 const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-                const form = pdfDoc.getForm();
-                
-                // Получаем все поля формы
-                const fields = form.getFields();
-                // Фильтруем только текстовые поля
-                const textFields = fields.filter(f => f instanceof PDFLib.PDFTextField);
 
+                // 2. Подключаем Fontkit
+                pdfDoc.registerFontkit(fontkit);
+
+                // 3. Загружаем шрифт (Noto Sans Hebrew)
+                const fontUrl = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosanshebrew/NotoSansHebrew-Regular.ttf';
+                const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+                const hebrewFont = await pdfDoc.embedFont(fontBytes);
+
+                // 4. Заполняем форму
+                const form = pdfDoc.getForm();
+                const fields = form.getFields();
+                
+                // Находим текстовые поля
+                const textFields = fields.filter(f => typeof f.setText === 'function');
+                
                 if (textFields.length < 2) {
-                    throw new Error('Недостаточно текстовых полей в PDF. Найдено: ' + textFields.length);
+                    throw new Error("Не найдено достаточно полей в PDF. Проверьте blank.pdf");
                 }
 
-                // Используем стандартный метод setText
-                textFields[0].setText(limitationsText);
-                textFields[1].setText(jobText);
+                // Применяем шрифт и текст к каждому полю
+                textFields.forEach(field => {
+                    field.setFont(hebrewFont);
+                });
 
+                textFields[0].setText(document.getElementById('med_text').value);
+                textFields[1].setText(document.getElementById('job_text').value);
+
+                // 5. Сохраняем
                 const pdfBytes = await pdfDoc.save();
-
                 const blob = new Blob([pdfBytes], { type: "application/pdf" });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
                 link.download = "טופס_מצהיר_חתום.pdf";
-                document.body.appendChild(link);
                 link.click();
-                document.body.removeChild(link);
 
             } catch (error) {
                 alert('Ошибка: ' + error.message);
