@@ -1,75 +1,195 @@
+```html
 <!DOCTYPE html>
-<html lang="ru" data-theme="light">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Form Generator</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    
-    <style>
-        body { padding-top: 1rem; background-color: #f8f9fa; }
-        main { max-width: 600px; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        textarea { direction: rtl; text-align: right; height: 120px; margin-bottom: 1rem; }
-        .loader { display: none; margin-top: 1rem; color: #10957c; font-weight: bold; text-align: center; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>PDF Form Generator</title>
+
+<link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+<style>
+body{
+    padding-top:1rem;
+    background:#f8f9fa;
+}
+
+main{
+    max-width:600px;
+    background:white;
+    padding:2rem;
+    border-radius:8px;
+    box-shadow:0 4px 6px rgba(0,0,0,.1);
+}
+
+textarea{
+    direction:rtl;
+    text-align:right;
+    height:120px;
+    margin-bottom:1rem;
+}
+
+.loader{
+    display:none;
+    margin-top:1rem;
+    color:#10957c;
+    font-weight:bold;
+    text-align:center;
+}
+</style>
 </head>
+
 <body>
-    <main class="container">
-        <h1>Генератор бланков</h1>
-        <form id="pdf-form" onsubmit="generatePDF(event)">
-            <label>Медицинские ограничения:</label>
-            <textarea id="med_text" required></textarea>
-            <label>Трудоспособность:</label>
-            <textarea id="job_text" required></textarea>
-            <button type="submit" class="contrast" style="width: 100%;">Сгенерировать PDF</button>
-        </form>
-        <div id="loading-status" class="loader">Обработка...</div>
-    </main>
 
-    <script>
-        async function generatePDF(event) {
-            event.preventDefault();
-            const statusDiv = document.getElementById('loading-status');
-            statusDiv.style.display = 'block';
+<main class="container">
 
-            try {
-                // 1. Загрузка PDF
-                const pdfResponse = await fetch('./blank.pdf');
-                if (!pdfResponse.ok) throw new Error('Файл blank.pdf не найден');
-                const pdfDoc = await PDFLib.PDFDocument.load(await pdfResponse.arrayBuffer());
+<h1>Генератор бланков</h1>
 
-                // 2. Получение формы
-                const form = pdfDoc.getForm();
-                
-                // ВАЖНО: Это заставляет ридер PDF самому отрисовать текст, 
-                // игнорируя встроенные шрифты (решает ошибку WinAnsi)
-                form.needAppearances();
+<form id="pdf-form">
 
-                const fields = form.getFields();
-                const textFields = fields.filter(f => typeof f.setText === 'function');
-                
-                if (textFields.length < 2) throw new Error("Не найдено достаточно полей в PDF");
+<label>Медицинские ограничения</label>
+<textarea id="med_text" required></textarea>
 
-                // 3. Заполнение текста
-                textFields[0].setText(document.getElementById('med_text').value);
-                textFields[1].setText(document.getElementById('job_text').value);
+<label>Трудоспособность</label>
+<textarea id="job_text" required></textarea>
 
-                // 4. Сохранение
-                const pdfBytes = await pdfDoc.save();
-                const blob = new Blob([pdfBytes], { type: "application/pdf" });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = "טופס_מצהיר_חתום.pdf";
-                link.click();
+<button type="submit" class="contrast" style="width:100%;">
+Сгенерировать PDF
+</button>
 
-            } catch (error) {
-                alert('Ошибка: ' + error.message);
-                console.error(error);
-            } finally {
-                statusDiv.style.display = 'none';
-            }
+</form>
+
+<div id="loading-status" class="loader">
+Обработка...
+</div>
+
+</main>
+
+<script>
+
+document
+.getElementById('pdf-form')
+.addEventListener('submit', generatePDF);
+
+async function generatePDF(event){
+
+    event.preventDefault();
+
+    const statusDiv =
+        document.getElementById('loading-status');
+
+    statusDiv.style.display='block';
+
+    try{
+
+        const response =
+            await fetch('./blank.pdf');
+
+        if(!response.ok){
+            throw new Error(
+                'Не найден файл blank.pdf'
+            );
         }
-    </script>
+
+        const pdfBytes =
+            await response.arrayBuffer();
+
+        const pdfDoc =
+            await PDFLib.PDFDocument.load(pdfBytes);
+
+        const form = pdfDoc.getForm();
+
+        try{
+
+            const acroForm =
+                pdfDoc.catalog.lookup(
+                    PDFLib.PDFName.of('AcroForm')
+                );
+
+            if(acroForm){
+                acroForm.set(
+                    PDFLib.PDFName.of('NeedAppearances'),
+                    PDFLib.PDFBool.True
+                );
+            }
+
+        }catch(e){
+            console.warn(
+                'NeedAppearances не установлен',
+                e
+            );
+        }
+
+        const fields = form.getFields();
+
+        const textFields =
+            fields.filter(
+                field =>
+                typeof field.setText === 'function'
+            );
+
+        if(textFields.length < 2){
+            throw new Error(
+                'В PDF найдено менее двух текстовых полей'
+            );
+        }
+
+        const medText =
+            document.getElementById('med_text').value;
+
+        const jobText =
+            document.getElementById('job_text').value;
+
+        textFields[0].setText(medText);
+        textFields[1].setText(jobText);
+
+        const finalPdf =
+            await pdfDoc.save();
+
+        const blob =
+            new Blob(
+                [finalPdf],
+                {type:'application/pdf'}
+            );
+
+        const url =
+            URL.createObjectURL(blob);
+
+        const a =
+            document.createElement('a');
+
+        a.href = url;
+        a.download = 'filled_form.pdf';
+
+        document.body.appendChild(a);
+
+        a.click();
+
+        a.remove();
+
+        URL.revokeObjectURL(url);
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        alert(
+            'Ошибка: ' + error.message
+        );
+    }
+    finally{
+
+        statusDiv.style.display='none';
+    }
+}
+
+</script>
+
 </body>
 </html>
+```
