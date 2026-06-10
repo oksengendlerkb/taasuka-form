@@ -1,72 +1,115 @@
 <!DOCTYPE html>
+
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Form Generator</title>
 
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+```
+<title>🇮🇱 Генератор бланка для службы занятости Израиля</title>
 
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
 
-    <style>
-        body {
-            padding-top: 1rem;
-            background-color: #f8f9fa;
-        }
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
 
-        main {
-            max-width: 600px;
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+<style>
+    body {
+        padding-top: 1rem;
+        background-color: #f8f9fa;
+    }
 
-        textarea {
-            direction: rtl;
-            text-align: right;
-            height: 120px;
-            margin-bottom: 1rem;
-        }
+    main {
+        max-width: 700px;
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
 
-        .loader {
-            display: none;
-            margin-top: 1rem;
-            color: #10957c;
-            font-weight: bold;
-            text-align: center;
-        }
-    </style>
+    h1 {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    textarea {
+        direction: rtl;
+        text-align: right;
+        height: 120px;
+        margin-bottom: 1rem;
+    }
+
+    .author {
+        text-align: right;
+        color: gray;
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .loader {
+        display: none;
+        margin-top: 1rem;
+        color: #10957c;
+        font-weight: bold;
+        text-align: center;
+    }
+</style>
+```
+
 </head>
 
 <body>
 
 <main class="container">
 
-    <h1>Генератор бланков</h1>
+```
+<h1>
+    🇮🇱 Генератор бланка для службы занятости Израиля<br>
+    Declaration of Health<br>
+    הצהרת בריאות
+</h1>
 
-    <form id="pdf-form">
+<form id="pdf-form">
 
-        <label>Медицинские ограничения:</label>
-        <textarea id="med_text" required></textarea>
+    <label>
+        Медицинские ограничения / Medical limitations / מגבלות רפואיות
+    </label>
 
-        <label>Трудоспособность:</label>
-        <textarea id="job_text" required></textarea>
+    <textarea
+            id="med_text"
+            required
+            placeholder="Вводить только на иврите / Enter Hebrew text only / יש להזין טקסט בעברית בלבד">
+    </textarea>
 
-        <button type="submit"
-                class="contrast"
-                style="width:100%;">
-            Сгенерировать PDF
-        </button>
+    <label>
+        Трудоспособность / Work capability / כושר עבודה
+    </label>
 
-    </form>
+    <textarea
+            id="job_text"
+            required
+            placeholder="Вводить только на иврите / Enter Hebrew text only / יש להזין טקסט בעברית בלבד">
+    </textarea>
 
-    <div id="loading-status" class="loader">
-        Обработка...
+    <div class="author">
+        Oksengendler Kirill, Haifa
     </div>
+
+    <button
+            type="submit"
+            class="contrast"
+            style="width:100%;">
+        Сгенерировать PDF / Generate PDF / צור PDF
+    </button>
+
+</form>
+
+<div id="loading-status" class="loader">
+    Обработка... / Processing... / מעבד...
+</div>
+```
 
 </main>
 
@@ -135,19 +178,21 @@ async function generatePDF(event) {
         }
 
         const medText =
-            document.getElementById('med_text').value;
+            document.getElementById('med_text').value.trim();
 
         const jobText =
-            document.getElementById('job_text').value;
+            document.getElementById('job_text').value.trim();
 
         textFields[0].setText(medText);
         textFields[1].setText(jobText);
 
+        textFields[0].setFontSize(12);
+        textFields[1].setFontSize(12);
+
         form.updateFieldAppearances(
             hebrewFont
         );
-        
-        // Эта команда убирает интерактивные поля и их синюю подсветку
+
         form.flatten();
 
         const outputBytes =
@@ -184,7 +229,7 @@ async function generatePDF(event) {
         console.error(error);
 
         alert(
-            'Ошибка: ' + error.message
+            'Ошибка / Error / שגיאה: ' + error.message
         );
     }
     finally {
@@ -197,3 +242,4 @@ async function generatePDF(event) {
 
 </body>
 </html>
+
