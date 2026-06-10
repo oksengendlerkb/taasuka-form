@@ -41,8 +41,8 @@
         <header>
             <h1>🇮🇱 Генератор бланков Службы занятости / Employment Service Form Generator</h1>
             <p class="description">
-                RU: Автоматическое заполнение декларации. Данные обрабатываются локально в браузере.<br>
-                EN: Automated declaration form filler. All data is processed locally in your browser.
+                RU: Автоматическое заполнение декларации.<br>
+                EN: Automated declaration form filler.
             </p>
         </header>
 
@@ -51,30 +51,30 @@
                 
                 <div>
                     <span class="field-label">1. Медицинские ограничения / Medical Limitations</span>
-                    <span class="field-sublabel">הצהרה на מגבלות רפואיות</span>
+                    <span class="field-sublabel">הצהרה על מגבלות רפואיות</span>
                     <textarea 
                         id="med_text" 
                         required 
-                        placeholder="RU: Поле «Медицинские ограничения» заполняется исключительно на иврите.&#10;EN: The «Medical Limitations» field must be filled out exclusively in Hebrew."></textarea>
+                        placeholder="Введите текст на иврите..."></textarea>
                 </div>
 
                 <div>
                     <span class="field-label">2. Трудоспособность / Employment Capacity</span>
-                    <span class="field-sublabel">הצהרה на מסוגלות תעסוקתית</span>
+                    <span class="field-sublabel">הצהרה על מסוגלות תעסוקתית</span>
                     <textarea 
                         id="job_text" 
                         required 
-                        placeholder="RU: Поле «Трудоспособность» заполняется исключительно на иврите.&#10;EN: The «Employment Capacity» field must be filled out exclusively in Hebrew."></textarea>
+                        placeholder="Введите текст на иврите..."></textarea>
                 </div>
 
                 <div class="author-credit">Oksengendler Kirill, Haifa</div>
                 
                 <button type="submit" class="contrast" style="width: 100%;">
-                    Сгенерировать и скачать PDF / Generate and Download PDF
+                    Сгенерировать и скачать PDF
                 </button>
             </form>
             
-            <div id="loading-status" class="loader">Обработка документа / Processing PDF...</div>
+            <div id="loading-status" class="loader">Обработка документа...</div>
         </section>
 
         <footer>
@@ -95,43 +95,26 @@
 
                 const templateUrl = './blank.pdf'; 
                 
-                // 1. Загружаем PDF бланк
                 const existingPdfBytes = await fetch(templateUrl).then(res => {
-                    if (!res.ok) throw new Error('Файл blank.pdf не найден на сервере.');
+                    if (!res.ok) throw new Error('Файл blank.pdf не найден.');
                     return res.arrayBuffer();
                 });
 
                 const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-                
                 const form = pdfDoc.getForm();
-                const textFields = form.getFields().filter(f => typeof f.setText === 'function');
+                
+                // Получаем все поля формы
+                const fields = form.getFields();
+                // Фильтруем только текстовые поля
+                const textFields = fields.filter(f => f instanceof PDFLib.PDFTextField);
 
                 if (textFields.length < 2) {
-                    const allNames = form.getFields().map(f => f.getName()).join(', ');
-                    throw new Error('В вашем PDF-файле не найдены интерактивные поля. Найдено полей: ' + (allNames || '0'));
+                    throw new Error('Недостаточно текстовых полей в PDF. Найдено: ' + textFields.length);
                 }
 
-                // Извлекаем низкоуровневые конструкторы из PDFLib для прямой манипуляции словарем PDF
-                const { PDFName, PDFHexString, PDFBoolean } = PDFLib;
-
-                // 2. Записываем значения напрямую в виде Юникод-строки (Hex UTF-16BE)
-                // Это обходит внутренний генератор внешнего вида pdf-lib, ломающийся на иврите
-                textFields[0].acroField.setV(PDFHexString.fromText(limitationsText));
-                textFields[1].acroField.setV(PDFHexString.fromText(jobText));
-
-                // 3. Выставляем флаг NeedAppearances в значение true.
-                // Это заставляет просмотрщик PDF (браузер, Adobe Reader) отрисовать текст встроенными системными шрифтами.
-                const acroFormRef = pdfDoc.catalog.get(PDFName.of('AcroForm'));
-                if (acroFormRef) {
-                    const acroForm = pdfDoc.context.lookup(acroFormRef);
-                    if (acroForm) {
-                        acroForm.set(PDFName.of('NeedAppearances'), PDFBoolean.True);
-                    }
-                }
-
-                // Делаем поля доступными только для чтения (защита от редактирования пользователем)
-                if (typeof textFields[0].readOnly === 'function') textFields[0].readOnly();
-                if (typeof textFields[1].readOnly === 'function') textFields[1].readOnly();
+                // Используем стандартный метод setText
+                textFields[0].setText(limitationsText);
+                textFields[1].setText(jobText);
 
                 const pdfBytes = await pdfDoc.save();
 
@@ -144,7 +127,7 @@
                 document.body.removeChild(link);
 
             } catch (error) {
-                alert('Ошибка / Error: ' + error.message);
+                alert('Ошибка: ' + error.message);
                 console.error(error);
             } finally {
                 statusDiv.style.display = 'none';
