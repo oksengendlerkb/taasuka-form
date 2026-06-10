@@ -34,12 +34,10 @@
             statusDiv.style.display = 'block';
 
             try {
-                // 1. Загрузка PDF
                 const pdfResponse = await fetch('./blank.pdf');
-                if (!pdfResponse.ok) throw new Error('Не удалось найти blank.pdf');
+                if (!pdfResponse.ok) throw new Error('Файл blank.pdf не найден');
                 const pdfDoc = await PDFLib.PDFDocument.load(await pdfResponse.arrayBuffer());
 
-                // 2. Заполнение полей
                 const form = pdfDoc.getForm();
                 const fields = form.getFields();
                 const textFields = fields.filter(f => typeof f.setText === 'function');
@@ -49,15 +47,13 @@
                 textFields[0].setText(document.getElementById('med_text').value);
                 textFields[1].setText(document.getElementById('job_text').value);
 
-                // 3. Активация авто-рендеринга шрифтов (решает проблему отображения иврита)
-                const { PDFName, PDFBoolean } = PDFLib;
-                const acroFormRef = pdfDoc.catalog.get(PDFName.of('AcroForm'));
+                // Исправленный метод активации NeedAppearances
+                const acroFormRef = pdfDoc.catalog.get(PDFLib.PDFName.of('AcroForm'));
                 if (acroFormRef) {
                     const acroForm = pdfDoc.context.lookup(acroFormRef);
-                    acroForm.set(PDFName.of('NeedAppearances'), PDFBoolean.True);
+                    acroForm.set(PDFLib.PDFName.of('NeedAppearances'), pdfDoc.context.obj(true));
                 }
 
-                // 4. Сохранение
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: "application/pdf" });
                 const link = document.createElement('a');
