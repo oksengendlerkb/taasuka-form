@@ -1,305 +1,228 @@
 <!DOCTYPE html>
-
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="light">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-```
-<title>Декларация здоровья для Службы занятости Израиля</title>
+    <title>Декларация здоровья для Службы занятости Израиля</title>
 
-<link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link rel="stylesheet"
+          href="[https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css](https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css)">
 
-<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
+    <script src="[https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js](https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js)"></script>
+    <script src="[https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js](https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js)"></script>
 
-<style>
+    <style>
+        :root {
+            color-scheme: light;
+        }
 
-    :root {
-        color-scheme: light;
-    }
-
-    body {
-        padding: 12px;
-        background: #f5f5f5;
-        color: #222;
-    }
-
-    main {
-        max-width: 700px;
-        background: #ffffff;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,.08);
-    }
-
-    h1 {
-        font-size: 1rem;
-        line-height: 1.25;
-        text-align: center;
-        margin-bottom: 20px;
-        font-weight: 600;
-        color: #222;
-    }
-
-    label {
-        color: #333;
-        font-size: 0.95rem;
-        font-weight: 500;
-    }
-
-    textarea {
-        direction: rtl;
-        text-align: right;
-
-        height: 120px;
-
-        background: #ffffff !important;
-        color: #000000 !important;
-
-        border: 1px solid #cfcfcf;
-        border-radius: 8px;
-
-        padding: 12px;
-
-        font-size: 16px;
-
-        margin-bottom: 16px;
-    }
-
-    textarea::placeholder {
-        color: #777777;
-        opacity: 1;
-        font-size: 14px;
-    }
-
-    textarea:focus {
-        border-color: #10957c;
-        box-shadow: 0 0 0 1px #10957c;
-    }
-
-    .author {
-        text-align: right;
-        color: #777777;
-        font-size: 12px;
-        margin-top: 6px;
-        margin-bottom: 12px;
-    }
-
-    button {
-        width: 100%;
-        font-size: 16px;
-        font-weight: 600;
-    }
-
-    .loader {
-        display: none;
-        margin-top: 15px;
-        color: #10957c;
-        font-weight: 600;
-        text-align: center;
-    }
-
-    @media (max-width: 600px) {
+        body {
+            padding: 12px;
+            background: #f5f5f5;
+            color: #222;
+        }
 
         main {
-            padding: 16px;
-            border-radius: 10px;
+            max-width: 700px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.08);
         }
 
         h1 {
+            font-size: 1.4rem;
+            line-height: 1.2;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #222;
+        }
+
+        .disclaimer {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 25px;
+            font-style: italic;
+        }
+
+        label {
+            color: #333;
             font-size: 0.95rem;
+            font-weight: 500;
         }
 
         textarea {
-            height: 110px;
+            direction: rtl;
+            text-align: right;
+            height: 120px;
+            background: #ffffff !important;
+            color: #000000 !important;
+            border: 1px solid #cfcfcf;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 16px;
+            margin-bottom: 16px;
         }
-    }
 
-</style>
-```
+        textarea::placeholder {
+            color: #777777;
+            opacity: 1;
+            font-size: 14px;
+        }
 
+        textarea:focus {
+            border-color: #10957c;
+            box-shadow: 0 0 0 1px #10957c;
+        }
+
+        .author {
+            text-align: right;
+            color: #777777;
+            font-size: 12px;
+            margin-top: 6px;
+            margin-bottom: 12px;
+        }
+
+        button {
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .loader {
+            display: none;
+            margin-top: 15px;
+            color: #10957c;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            main {
+                padding: 16px;
+                border-radius: 10px;
+            }
+            h1 {
+                font-size: 1.2rem;
+            }
+            textarea {
+                height: 110px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
 <main class="container">
 
-```
-<h1>
-    Декларация здоровья для Службы занятости Израиля<br>
-    Declaration of Health for the Israeli Employment Service<br>
-    הצהרת בריאות
-</h1>
+    <h1>
+        Декларация здоровья для Службы занятости Израиля<br>
+        Declaration of Health for the Israeli Employment Service<br>
+        הצהרת בריאות לשירות התעסוקה
+    </h1>
+    <div class="disclaimer">This service does not store personal information.</div>
 
-<form id="pdf-form">
+    <form id="pdf-form">
 
-    <label>
-        Медицинские ограничения / Medical limitations / מגבלות רפואיות
-    </label>
+        <label>
+            Медицинские ограничения / Medical limitations / מגבלות רפואיות
+        </label>
 
-    <textarea
-        id="med_text"
-        required
-        placeholder="Только иврит / Hebrew only / עברית בלבד"></textarea>
+        <textarea
+            id="med_text"
+            required
+            placeholder="Только иврит / Hebrew only / עברית בלבד"></textarea>
 
-    <label>
-        Трудоспособность / Work capability / כושר עבודה
-    </label>
+        <label>
+            Трудоспособность / Work capability / כושר עבודה
+        </label>
 
-    <textarea
-        id="job_text"
-        required
-        placeholder="Только иврит / Hebrew only / עברית בלבד"></textarea>
+        <textarea
+            id="job_text"
+            required
+            placeholder="Только иврит / Hebrew only / עברית בלבד"></textarea>
 
-    <div class="author">
-        Oksengendler Kirill, Haifa
+        <div class="author">
+            Oksengendler Kirill, Haifa
+        </div>
+
+        <button
+            type="submit"
+            class="contrast">
+            Сгенерировать PDF / Generate PDF / צור PDF
+        </button>
+
+    </form>
+
+    <div id="loading-status" class="loader">
+        Обработка... / Processing... / מעבד...
     </div>
-
-    <button
-        type="submit"
-        class="contrast">
-        Сгенерировать PDF / Generate PDF / צור PDF
-    </button>
-
-</form>
-
-<div id="loading-status" class="loader">
-    Обработка... / Processing... / מעבד...
-</div>
-```
 
 </main>
 
 <script>
+    document.getElementById('pdf-form').addEventListener('submit', generatePDF);
 
-document
-    .getElementById('pdf-form')
-    .addEventListener('submit', generatePDF);
+    async function generatePDF(event) {
+        event.preventDefault();
+        const statusDiv = document.getElementById('loading-status');
+        statusDiv.style.display = 'block';
 
-async function generatePDF(event) {
+        try {
+            const pdfResponse = await fetch('./blank.pdf');
+            if (!pdfResponse.ok) throw new Error('Файл blank.pdf не найден');
 
-    event.preventDefault();
+            const pdfBytes = await pdfResponse.arrayBuffer();
+            const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+            const form = pdfDoc.getForm();
 
-    const statusDiv =
-        document.getElementById('loading-status');
+            pdfDoc.registerFontkit(fontkit);
+            const fontResponse = await fetch('./NotoSansHebrew-Regular.ttf');
+            if (!fontResponse.ok) throw new Error('Не найден файл NotoSansHebrew-Regular.ttf');
 
-    statusDiv.style.display = 'block';
+            const fontBytes = await fontResponse.arrayBuffer();
+            const hebrewFont = await pdfDoc.embedFont(fontBytes);
 
-    try {
+            const fields = form.getFields();
+            const textFields = fields.filter(f => typeof f.setText === 'function');
 
-        const pdfResponse =
-            await fetch('./blank.pdf');
+            if (textFields.length < 2) throw new Error('В PDF найдено менее двух текстовых полей');
 
-        if (!pdfResponse.ok) {
-            throw new Error(
-                'Файл blank.pdf не найден'
-            );
+            const medText = document.getElementById('med_text').value.trim();
+            const jobText = document.getElementById('job_text').value.trim();
+
+            textFields[0].setText(medText);
+            textFields[1].setText(jobText);
+
+            textFields[0].setFontSize(12);
+            textFields[1].setFontSize(12);
+
+            form.updateFieldAppearances(hebrewFont);
+            form.flatten();
+
+            const outputBytes = await pdfDoc.save();
+            const blob = new Blob([outputBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'filled_form.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error(error);
+            alert('Ошибка / Error / שגיאה: ' + error.message);
+        } finally {
+            statusDiv.style.display = 'none';
         }
-
-        const pdfBytes =
-            await pdfResponse.arrayBuffer();
-
-        const pdfDoc =
-            await PDFLib.PDFDocument.load(pdfBytes);
-
-        const form = pdfDoc.getForm();
-
-        pdfDoc.registerFontkit(fontkit);
-
-        const fontResponse =
-            await fetch('./NotoSansHebrew-Regular.ttf');
-
-        if (!fontResponse.ok) {
-            throw new Error(
-                'Не найден файл NotoSansHebrew-Regular.ttf'
-            );
-        }
-
-        const fontBytes =
-            await fontResponse.arrayBuffer();
-
-        const hebrewFont =
-            await pdfDoc.embedFont(fontBytes);
-
-        const fields = form.getFields();
-
-        const textFields =
-            fields.filter(
-                f => typeof f.setText === 'function'
-            );
-
-        if (textFields.length < 2) {
-            throw new Error(
-                'В PDF найдено менее двух текстовых полей'
-            );
-        }
-
-        const medText =
-            document.getElementById('med_text').value.trim();
-
-        const jobText =
-            document.getElementById('job_text').value.trim();
-
-        textFields[0].setText(medText);
-        textFields[1].setText(jobText);
-
-        textFields[0].setFontSize(12);
-        textFields[1].setFontSize(12);
-
-        form.updateFieldAppearances(
-            hebrewFont
-        );
-
-        form.flatten();
-
-        const outputBytes =
-            await pdfDoc.save();
-
-        const blob =
-            new Blob(
-                [outputBytes],
-                {
-                    type: 'application/pdf'
-                }
-            );
-
-        const url =
-            URL.createObjectURL(blob);
-
-        const link =
-            document.createElement('a');
-
-        link.href = url;
-        link.download = 'filled_form.pdf';
-
-        document.body.appendChild(link);
-
-        link.click();
-
-        document.body.removeChild(link);
-
-        URL.revokeObjectURL(url);
-
     }
-    catch (error) {
-
-        console.error(error);
-
-        alert(
-            'Ошибка / Error / שגיאה: ' + error.message
-        );
-    }
-    finally {
-
-        statusDiv.style.display = 'none';
-    }
-}
-
 </script>
 
 </body>
 </html>
-
